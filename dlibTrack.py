@@ -2,54 +2,25 @@
 import cv2
 import dlib
 
+#Initialize a car cascade
+carCascade = cv2.CascadeClassifier('cars4.xml')
 
-import threading
-import time
-
-#Initialize a face cascade using the frontal face haar cascade provided with
-#the OpenCV library
-#Make sure that you copy this file from the opencv project to the root of this
-#project folder
-faceCascade = cv2.CascadeClassifier('cars4.xml')
-
-#The deisred output width and height
-OUTPUT_SIZE_WIDTH = 775
-OUTPUT_SIZE_HEIGHT = 600
-
-
-#We are not doing really face recognition
-def doRecognizePerson(faceNames, cid):
-    #time.sleep(2)
-    faceNames[ cid ] = "Car " + str(cid)
-
-
-
-
-def detectAndTrackMultipleFaces():
-    #Open the first webcame device
-    capture = cv2.VideoCapture('file12.mp4')
-
-    #Create two opencv named windows
-    #cv2.namedWindow("base-image", cv2.WINDOW_AUTOSIZE)
+def detectAndTrackMultiplecars():
+    #Open the video/source
+    capture = cv2.VideoCapture('file7.mp4')
+    
     cv2.namedWindow("result-image", cv2.WINDOW_AUTOSIZE)
 
-    #Position the windows next to eachother
-    #cv2.moveWindow("base-image",0,100)
-    #cv2.moveWindow("result-image",400,100)
+    #The color of the rectangle we draw around the car
+    rectangleColor = (0,0,255)
 
-    #Start the window thread for the two windows we are using
-    #cv2.startWindowThread()
-
-    #The color of the rectangle we draw around the face
-    rectangleColor = (0,165,255)
-
-    #variables holding the current frame number and the current faceid
+    #variables holding the current frame number and the current carID
     frameCounter = 0
-    currentFaceID = 0
+    currentcarID = 0
 
-    #Variables holding the correlation trackers and the name per faceid
-    faceTrackers = {}
-    faceNames = {}
+    #Variables holding the correlation trackers and the name per carID
+    carTrackers = {}
+    carNames = {}
 
     try:
         while True:
@@ -71,7 +42,7 @@ def detectAndTrackMultipleFaces():
 
             #Result image is the image we will show the user, which is a
             #combination of the original image from the webcam and the
-            #overlayed rectangle for the largest face
+            #overlayed rectangle for the largest car
             resultImage = baseImage.copy()
 
 
@@ -81,12 +52,12 @@ def detectAndTrackMultipleFaces():
             # * Update all trackers and remove the ones that are not 
             #   relevant anymore
             # * Every 10 frames:
-            #       + Use face detection on the current frame and look
-            #         for faces. 
-            #       + For each found face, check if centerpoint is within
+            #       + Use car detection on the current frame and look
+            #         for cars. 
+            #       + For each found car, check if centerpoint is within
             #         existing tracked box. If so, nothing to do
             #       + If centerpoint is NOT in existing tracked box, then
-            #         we add a new tracker with a new face-id
+            #         we add a new tracker with a new car-id
 
 
             #Increase the framecounter
@@ -97,8 +68,8 @@ def detectAndTrackMultipleFaces():
             #Update all the trackers and remove the ones for which the update
             #indicated the quality was not good enough
             cidsToDelete = []
-            for cid in faceTrackers.keys():
-                trackingQuality = faceTrackers[ cid ].update( baseImage )
+            for cid in carTrackers.keys():
+                trackingQuality = carTrackers[ cid ].update( baseImage )
 
                 #If the tracking quality is not good enough, we must delete
                 #this tracker
@@ -107,38 +78,40 @@ def detectAndTrackMultipleFaces():
 
             for cid in cidsToDelete:
                 print("Removing cid " + str(cid) + " from list of trackers")
-                faceTrackers.pop( cid , None )
+                carTrackers.pop( cid , None )
 
 
 
 
-            #Every 10 frames, we will have to determine which faces
+            #Every 20 frames, we will have to determine which cars
             #are present in the frame
-            if (frameCounter % 20) == 0:
+            if (frameCounter % 10) == 0:
 
 
 
-                #For the face detection, we need to make use of a gray
+                #For the car detection, we need to make use of a gray
                 #colored image so we will convert the baseImage to a
                 #gray-based image
                 gray = cv2.cvtColor(baseImage, cv2.COLOR_BGR2GRAY)
-                #Now use the haar cascade detector to find all faces
+                cropped = gray[400:,:]
+                cv2.imshow("Crop", cropped)
+                #Now use the haar cascade detector to find all cars
                 #in the image
-                faces = faceCascade.detectMultiScale(gray,scaleFactor = 1.5, 
-                                            minNeighbors = 4, 
+                cars = carCascade.detectMultiScale(cropped,scaleFactor = 1.4, 
+                                            minNeighbors = 3, 
                                             minSize=(50,50))
 
 
 
-                #Loop over all faces and check if the area for this
-                #face is the largest so far
+                #Loop over all cars and check if the area for this
+                #car is the largest so far
                 #We need to convert it to int here because of the
                 #requirement of the dlib tracker. If we omit the cast to
                 #int here, you will get cast errors since the detector
                 #returns numpy.int32 and the tracker requires an int
-                for (_x,_y,_w,_h) in faces:
+                for (_x,_y,_w,_h) in cars:
                     x = int(_x)
-                    y = int(_y)
+                    y = int(_y)+400
                     w = int(_w)
                     h = int(_h)
 
@@ -149,15 +122,15 @@ def detectAndTrackMultipleFaces():
 
 
 
-                    #Variable holding information which faceid we 
+                    #Variable holding information which carID we 
                     #matched with
                     matchedcid = None
 
                     #Now loop over all the trackers and check if the 
-                    #centerpoint of the face is within the box of a 
+                    #centerpoint of the car is within the box of a 
                     #tracker
-                    for cid in faceTrackers.keys():
-                        tracked_position =  faceTrackers[cid].get_position()
+                    for cid in carTrackers.keys():
+                        tracked_position =  carTrackers[cid].get_position()
 
                         t_x = int(tracked_position.left())
                         t_y = int(tracked_position.top())
@@ -169,22 +142,30 @@ def detectAndTrackMultipleFaces():
                         t_x_bar = t_x + 0.5 * t_w
                         t_y_bar = t_y + 0.5 * t_h
 
-                        #check if the centerpoint of the face is within the 
+
+                        #check if the centerpoint of the car is within the 
                         #rectangleof a tracker region. Also, the centerpoint
                         #of the tracker region must be within the region 
-                        #detected as a face. If both of these conditions hold
+                        #detected as a car. If both of these conditions hold
                         #we have a match
                         if ( ( t_x <= x_bar   <= (t_x + t_w)) and 
                              ( t_y <= y_bar   <= (t_y + t_h)) and 
                              ( x   <= t_x_bar <= (x   + w  )) and 
                              ( y   <= t_y_bar <= (y   + h  ))):
                             matchedcid = cid
+                            cv2.circle(resultImage,(int(x_bar), int(y_bar)), 2, (255,0,255), -1)
+                        
+                        
+
+                        #initiate warning system if car gets too close
+                        if (gray.shape[:2][0] - 100 <y_bar < gray.shape[:2][0]):
+                            print("[INFO] WARNING CAR APPROACHING")
 
 
                     #If no matched cid, then we have to create a new tracker
                     if matchedcid is None:
 
-                        print("Creating new tracker " + str(currentFaceID))
+                        print("Creating new tracker " + str(currentcarID))
 
                         #Create and store the tracker 
                         tracker = dlib.correlation_tracker()
@@ -194,28 +175,20 @@ def detectAndTrackMultipleFaces():
                                                             x+w,
                                                             y+h))
 
-                        faceTrackers[ currentFaceID ] = tracker
+                        carTrackers[ currentcarID ] = tracker
 
-                        #Start a new thread that is used to simulate 
-                        #face recognition. This is not yet implemented in this
-                        #version :)
-                        t = threading.Thread( target = doRecognizePerson ,
-                                               args=(faceNames, currentFaceID))
-                        #t.start()
-
-                        #Increase the currentFaceID counter
-                        currentFaceID += 1
+                        currentcarID += 1
 
 
 
 
             #Now loop over all the trackers we have and draw the rectangle
-            #around the detected faces. If we 'know' the name for this person
+            #around the detected cars. If we 'know' the name for this car
             #(i.e. the recognition thread is finished), we print the name
-            #of the person, otherwise the message indicating we are detecting
-            #the name of the person
-            for cid in faceTrackers.keys():
-                tracked_position =  faceTrackers[cid].get_position()
+            #of the car, otherwise the message indicating we are detecting
+            #the name of the car
+            for cid in carTrackers.keys():
+                tracked_position =  carTrackers[cid].get_position()
 
                 t_x = int(tracked_position.left())
                 t_y = int(tracked_position.top())
@@ -225,40 +198,11 @@ def detectAndTrackMultipleFaces():
                 cv2.rectangle(resultImage, (t_x, t_y),
                                         (t_x + t_w , t_y + t_h),
                                         rectangleColor ,2)
+            
+            cv2.line(resultImage,(0,resultImage.shape[:2][0] - 100),(resultImage.shape[:2][1],resultImage.shape[:2][0]-100),(255,0,0),1)
 
-
-                if cid in faceNames.keys():
-                    cv2.putText(resultImage, faceNames[cid] , 
-                                (int(t_x + t_w/2), int(t_y)), 
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                0.5, (255, 255, 255), 2)
-                else:
-                    cv2.putText(resultImage, "Detecting..." , 
-                                (int(t_x + t_w/2), int(t_y)), 
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                0.5, (255, 255, 255), 2)
-
-
-
-
-
-
-            #Since we want to show something larger on the screen than the
-            #original 320x240, we resize the image again
-            #
-            #Note that it would also be possible to keep the large version
-            #of the baseimage and make the result image a copy of this large
-            #base image and use the scaling factor to draw the rectangle
-            #at the right coordinates.
-            #largeResult = cv2.resize(resultImage,
-            #                         (OUTPUT_SIZE_WIDTH,OUTPUT_SIZE_HEIGHT))
-
-            largeResult = resultImage
-            #Finally, we want to show the images on the screen
-            #cv2.imshow("base-image", baseImage)
-            cv2.imshow("result-image", largeResult)
-
-
+            #Finally,show the images on the screen
+            cv2.imshow("result-image", resultImage)
 
 
     #To ensure we can also deal with the user pressing Ctrl-C in the console
@@ -273,4 +217,4 @@ def detectAndTrackMultipleFaces():
 
 
 if __name__ == '__main__':
-    detectAndTrackMultipleFaces()
+    detectAndTrackMultiplecars()
