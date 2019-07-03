@@ -9,7 +9,7 @@ This is a project to warn the driver about oncoming traffic. This was made keepi
 
 ## Approach 
 
-There were 2 approaches used for this application. This is meant to be executed on a embedded platform[https://www.imx6rex.com/] which is also catering to other applications being run on it simultaneously hence the approach had to be computationally efficient and fast at the same time. 
+There were 2 approaches used for this application. This is meant to be executed on a [embedded platform](https://www.imx6rex.com/) which is also catering to other applications being run on it simultaneously hence the approach had to be computationally efficient and fast at the same time. 
 
 To cater to the requirements of the project, two pipelines were tested out. One pipeline was using HaarCascades in conjugation with KLOptical Flow algorithm and in the second one used HaarCascades with correlation tracker in DLib. 
 
