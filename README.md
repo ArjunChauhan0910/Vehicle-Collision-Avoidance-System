@@ -23,7 +23,7 @@ In both approaches, the HaarCascade is run over a segment which is assumed to be
 
 ## Future Developments
 
-* Need to collect appropriate training data for HaarCascades. The following sources have been explored (1)[http://cogcomp.org/Data/Car/] (2)[http://cbcl.mit.edu/software-datasets/CarData.html] (3)[http://www-old.emt.tugraz.at/~pinz/data/GRAZ_02/]
+* Need to collect appropriate training data for HaarCascades. The following sources have been explored [1](http://cogcomp.org/Data/Car/) [2](http://cbcl.mit.edu/software-datasets/CarData.html) [3](http://www-old.emt.tugraz.at/~pinz/data/GRAZ_02/)
 
 * Training HaarCascades on different set of data which caters to our application
 
