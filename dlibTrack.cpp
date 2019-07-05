@@ -63,6 +63,7 @@ int main( int argc, const char **argv)
     Mat gray;
     Mat cropped;
     int w, h, x, y;
+    bool flag;
 
     //create tracker pointer
 
@@ -107,7 +108,7 @@ int main( int argc, const char **argv)
         }
 
 
-        if(frameCount%40 == 0) 
+        if(frameCount%10 == 0) 
         {
             Mat gray;
             Mat cropped;
@@ -150,15 +151,16 @@ int main( int argc, const char **argv)
        
 
         for(unsigned i=0;i<trackers->getObjects().size();i++)
-            {
-                rectangle( frame, trackers->getObjects()[i], Scalar( 255, 255, 255 ), .5, 1 );
+            {   
+                flag = false;
+                //rectangle( frame, trackers->getObjects()[i], Scalar( 255, 255, 255 ), .5, 1 );
                 //bbox[i] = trackers->getObjects()[i].x;
                 w = trackers->getObjects()[i].width;
                 h = trackers->getObjects()[i].height;
                 x = trackers->getObjects()[i].x;
                 y = trackers->getObjects()[i].y;
 
-                if (y + h < rows-50 && y+h > rows - 200)
+                /*if (y + h < rows-50 && y+h > rows - 200)
                 {
                     cout <<YELLOW "[WARNING] VEHICLE APPROACHING" RESET<<endl;
                     rectangle(frame, cvPoint(0,0), cvPoint(cols, rows), Scalar( 0, 255, 255 ), 1.5, 1.5 );
@@ -168,16 +170,34 @@ int main( int argc, const char **argv)
                     cout <<RED "[ALERT!] STOP!" RESET<<endl;
                     rectangle(frame, cvPoint(0,0), cvPoint(cols, rows), Scalar( 0, 0, 255 ), 3, 3 );
                 }
+                else if (y+h < rows - 100)
+                {
+                    cout <<GREEN "[CLEAR]" RESET<<endl;
+                }*/
+
+                if ( (w  < 90 && w > 60) || (y + h < rows-50 && y+h > rows - 200))
+                {
+                    cout <<YELLOW "[WARNING] VEHICLE APPROACHING" RESET<<endl;
+                    rectangle(frame, cvPoint(0,0), cvPoint(cols, rows), Scalar( 0, 255, 255 ), 3, 1.5 );
+                }
+                if (w > 90 || (y+h > rows-50))
+                {
+                    cout <<RED "[ALERT!] STOP!" RESET<<endl;
+                    rectangle(frame, cvPoint(0,0), cvPoint(cols, rows), Scalar( 0, 0, 255 ), 3, 3 );
+                }
+                
+                
  
  
             }
 
-        //Point YellowStart = Point(0,rows-200);
-        //Point YellowEnd = Point(cols, rows-200);
-        //Point RedStart = Point(0, rows-70);
-        //Point RedEnd = Point(cols, rows-70);
-        //line(frame, YellowStart, YellowEnd, Scalar(0,255,255), 1);
-        //line(frame, RedStart, RedEnd, Scalar(0,0,255), 1);
+
+        Point YellowStart = Point(0,rows-150);
+        Point YellowEnd = Point(cols, rows-150);
+        Point RedStart = Point(0, rows-70);
+        Point RedEnd = Point(cols, rows-70);
+        line(frame, YellowStart, YellowEnd, Scalar(0,255,255), 1);
+        line(frame, RedStart, RedEnd, Scalar(0,0,255), 1);
         //polylines(frame, ppt, &npt, 1,true, Scalar(255,0,255), 0.5 );
 
         imshow("Detected", frame);
