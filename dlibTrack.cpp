@@ -63,11 +63,14 @@ int main( int argc, const char **argv)
     Mat frame;
     Mat gray;
     Mat cropped;
-
+    int w, h, x, y;
     //create tracker pointer
 
+    //tracker->clear();
+
+    Ptr<MultiTracker> trackers = cv::MultiTracker::create();
+
     String trackingAlg = "KCF";
-    MultiTracker trackers;
     vector<Rect2d> objects;
     std::vector<Ptr<Tracker> > algorithms;
 
@@ -97,11 +100,13 @@ int main( int argc, const char **argv)
         }
 
 
-        if (frameCount%50 == 0)
+        if (frameCount%40 == 0)
         {
-            //resetTracker(*trackers);
-            MultiTracker *trackers;
-            cout <<"Reset"<<endl;
+            trackers->clear();
+
+            Ptr<MultiTracker> trackerNew = cv::MultiTracker::create();
+
+            trackers = trackerNew;
         }
 
 
@@ -112,9 +117,8 @@ int main( int argc, const char **argv)
             Mat cropped;
             Mat mask = Mat::zeros(cvSize(cols, rows),CV_8UC1);
 
-            objects.clear(); //let go of old tracks
-            algorithms.clear();
-            cout <<"Trackers "<<trackers.getObjects().size()<<endl;
+            
+            //cout <<"Trackers "<<trackers->getObjects().size()<<endl;
             
 
             cvtColor(frame, gray, COLOR_BGR2GRAY);
@@ -126,6 +130,12 @@ int main( int argc, const char **argv)
             imshow("Cropped", cropped);
             
             std::vector<Rect> cars;
+
+            objects.clear(); //let go of old tracks
+            algorithms.clear();
+            trackers->clear();
+            //tracker.add(algorithms,cropped,objects);
+
             car_cascade.detectMultiScale(cropped, cars, 
                                     1.4,
                                     3,
@@ -144,26 +154,37 @@ int main( int argc, const char **argv)
                 //create a bounding box and add it to the tracker              
                 algorithms.push_back(createTrackerByName(trackingAlg));
                 objects.push_back(cars[i]);
-                trackers.add(algorithms,cropped,objects);
-
-                //Check for hazard
-                if (center.y < rows-70 && center.y > rows - 200)
-                {
-                    if (cars[i].y+cars[i].height > rows-70)
-                    {
-                        cout <<RED "[ALERT!] STOP!" RESET<<endl;
-                    }
-
-                    cout <<YELLOW "[WARNING] VEHICLE APPROACHING" RESET<<endl;
-                }              
+                trackers->add(algorithms,cropped,objects);
             }
         }
 
         
-        bool ok = trackers.update(frame);
+        bool ok = trackers->update(frame);
         //cout <<trackers.getObjects().size()<< endl;
-        for(unsigned i=0;i<trackers.getObjects().size();i++)
-                rectangle( frame, trackers.getObjects()[i], Scalar( 255, 255, 255 ), .5, 1 );
+        for(unsigned i=0;i<trackers->getObjects().size();i++)
+            {
+                rectangle( frame, trackers->getObjects()[i], Scalar( 255, 255, 255 ), .5, 1 );
+                //bbox[i] = trackers->getObjects()[i].x;
+                w = trackers->getObjects()[i].width;
+                h = trackers->getObjects()[i].height;
+                x = trackers->getObjects()[i].x;
+                y = trackers->getObjects()[i].y;
+
+                if (y + h < rows-50 && y+h > rows - 200)
+                {
+                    cout <<YELLOW "[WARNING] VEHICLE APPROACHING" RESET<<endl;
+                    rectangle(frame, cvPoint(0,0), cvPoint(cols, rows), Scalar( 0, 255, 255 ), 1.5, 1.5 );
+                }
+                if (y+h > rows-50)
+                {
+                    cout <<RED "[ALERT!] STOP!" RESET<<endl;
+                    rectangle(frame, cvPoint(0,0), cvPoint(cols, rows), Scalar( 0, 0, 255 ), 3, 3 );
+                }
+ 
+ 
+            }
+
+            //cout << bbox << endl;
 
         /*if (ok)
         {   
