@@ -21,7 +21,6 @@ using namespace cv;
 
 CascadeClassifier car_cascade;
 
-//void resetTracker(*cv::MultiTracker);
 
 int main( int argc, const char **argv)
 {
@@ -64,12 +63,10 @@ int main( int argc, const char **argv)
     Mat gray;
     Mat cropped;
     int w, h, x, y;
+
     //create tracker pointer
 
-    //tracker->clear();
-
     Ptr<MultiTracker> trackers = cv::MultiTracker::create();
-
     String trackingAlg = "KCF";
     vector<Rect2d> objects;
     std::vector<Ptr<Tracker> > algorithms;
@@ -110,16 +107,11 @@ int main( int argc, const char **argv)
         }
 
 
-        if(frameCount%40 == 0) //check if 10 frames have passed
+        if(frameCount%40 == 0) 
         {
-            //cout <<"[INFO] 20 done"<<endl;
             Mat gray;
             Mat cropped;
             Mat mask = Mat::zeros(cvSize(cols, rows),CV_8UC1);
-
-            
-            //cout <<"Trackers "<<trackers->getObjects().size()<<endl;
-            
 
             cvtColor(frame, gray, COLOR_BGR2GRAY);
             equalizeHist(gray, gray);
@@ -133,9 +125,7 @@ int main( int argc, const char **argv)
 
             objects.clear(); //let go of old tracks
             algorithms.clear();
-            trackers->clear();
-            //tracker.add(algorithms,cropped,objects);
-
+ 
             car_cascade.detectMultiScale(cropped, cars, 
                                     1.4,
                                     3,
@@ -157,10 +147,8 @@ int main( int argc, const char **argv)
                 trackers->add(algorithms,cropped,objects);
             }
         }
+       
 
-        
-        bool ok = trackers->update(frame);
-        //cout <<trackers.getObjects().size()<< endl;
         for(unsigned i=0;i<trackers->getObjects().size();i++)
             {
                 rectangle( frame, trackers->getObjects()[i], Scalar( 255, 255, 255 ), .5, 1 );
@@ -184,33 +172,14 @@ int main( int argc, const char **argv)
  
             }
 
-            //cout << bbox << endl;
-
-        /*if (ok)
-        {   
-            cout <<"IN"<<endl;
-
-            for(unsigned i=0;i<trackers.getObjects().size();i++)
-                rectangle( frame, trackers.getObjects()[i], Scalar( 255, 255, 255 ), 2, 1 );
-        }*/
-
-        /*bool ok = tracker->update(frame, bbox);
-        if (ok)
-        {
-            // Tracking success : Draw the tracked object
-            rectangle(frame, bbox, Scalar( 255, 0, 0 ), 2, 1 );
-        }*/
-
-        //fillPoly( frame,ppt, &npt,1,Scalar( 255, 255, 255 ));
-        Point YellowStart = Point(0,rows-200);
-        Point YellowEnd = Point(cols, rows-200);
-
-        Point RedStart = Point(0, rows-70);
-        Point RedEnd = Point(cols, rows-70);
-
+        //Point YellowStart = Point(0,rows-200);
+        //Point YellowEnd = Point(cols, rows-200);
+        //Point RedStart = Point(0, rows-70);
+        //Point RedEnd = Point(cols, rows-70);
         //line(frame, YellowStart, YellowEnd, Scalar(0,255,255), 1);
         //line(frame, RedStart, RedEnd, Scalar(0,0,255), 1);
         //polylines(frame, ppt, &npt, 1,true, Scalar(255,0,255), 0.5 );
+
         imshow("Detected", frame);
 
         frameCount++;
